@@ -11,14 +11,12 @@ export default class ApiService {
   }
 
   async fetchHits() {
-    try {
-        const dataUrl = `/?image_type=photo&orientation=horizontal&q=${this.searchQuery}&page=${this.page}&per_page=${this.perPage}&key=${KEY}`;
-        const response = await fetch(`${BASE_URL}${dataUrl}`);
+    
+      const dataUrl = `/?image_type=photo&orientation=horizontal&q=${this.searchQuery}&page=${this.page}&per_page=${this.perPage}&key=${KEY}`;
+      const response = await fetch(`${BASE_URL}${dataUrl}`);
       const newResponse = await response.json();
       return newResponse.hits;
-    } catch (err) {
-      
-    }
+   
   }
 
   incrementPage() {

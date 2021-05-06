@@ -8,10 +8,10 @@ import getRefs from './js/get-refs';
 
 import '@pnotify/core/dist/BrightTheme.css';
 import '@pnotify/core/dist/PNotify.css';
-import { info } from '@pnotify/core';
+import { error } from '@pnotify/core';
 
 const apiService = new ApiService ();
-const debounce = require('lodash.debounce');
+
 const refs = getRefs();
 const observer = new IntersectionObserver(onEntry, {
     rootMargin: '150px',
@@ -19,46 +19,76 @@ const observer = new IntersectionObserver(onEntry, {
 
 refs.gallery.addEventListener('click', openModal);
 
-apiService.fetchHits()
+
 
 observer.observe(refs.scroll);
 
-refs.searchInput.addEventListener('input', debounce(onSearch, 500));
+refs.searchInput.addEventListener('submit', onSearch);
 
-
-function onSearch(e) {
-  e.preventDefault();
+async function onSearch(e) {
+  try {
+    e.preventDefault();
    
-  apiService.query = e.target.value;
+    apiService.query = e.currentTarget.elements.query.value;
  
-  if (!apiService.query) {
-    clearHits();
-    return
+    if (apiService.query === '' || !apiService.query.trim()) {
+      onSearchError()
+      return
+    }
+
+    await apiService.resetPage();
+
+    await clearHits();
+    
+    const hits = await apiService.fetchHits({})
+    // console.log(hits);
+    if(hits.length === 0){
+      onSearchError()
+      return
+    }
+    await appendHitsMarkup(hits)
+    
+    } catch (err){
+      onFetchError()
+    }
+    
+}
+
+function appendHitsMarkup (hits) {
+    hitsMarkup(hits)
+    apiService.incrementPage()
   }
 
-  apiService.resetPage();
-  clearHits();
-  apiService.fetchHits().then(hits => {
-    appendHitsMarkup(hits);
-    apiService.incrementPage();
-  });
-}
-
-function appendHitsMarkup(hits) {
+function hitsMarkup(hits) {
   refs.gallery.insertAdjacentHTML('beforeend', photoCardTpl(hits));
-}
-
-function clearHits() {
-  refs.gallery.innerHTML = '';
 }
 
 function onEntry(entries) {
   entries.forEach(entry => {
-    if (entry.isIntersecting && apiService.query !== '') {
-        apiService.fetchHits().then(hits => {
-        appendHitsMarkup(hits);
-        apiService.incrementPage();
-      });
+    if (apiService.query !== '') {
+        apiService.fetchHits()
+        .then(hits => {
+          hitsMarkup(hits);
+          apiService.incrementPage();
+        });
     }
   });
+}
+
+function onFetchError() {
+  error({
+    title: 'Fetch Error',
+    text: 'Runtime errors'
+  });
+}
+
+function onSearchError() {
+  error({
+    title: 'Search Error',
+    text: 'Incorrect search value. Please enter a more precise value!'
+  });
+}
+
+function clearHits() {
+  refs.gallery.innerHTML = '';
 }

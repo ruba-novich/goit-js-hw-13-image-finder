@@ -10,12 +10,13 @@ export default function openModal(e) {
         return 
     }
     else {
-        basicLightbox.create(`
-        <div class="modal">
-        <p>
-        <img src="${e.target.dataset.source}">
-        </p>
-        </div>`).show()
+        basicLightbox.create(
+            `<div class="modal">
+            <p>
+            <img src="${e.target.dataset.source}">
+            </p>
+            </div>`
+        ).show()
     }
 }
 
